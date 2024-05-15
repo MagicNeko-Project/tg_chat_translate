@@ -1,0 +1,6 @@
+pyrogram
+python-dotenv
+openai
+aiohttp
+pydub
+tgcrypto

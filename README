@@ -1,0 +1,135 @@
+# Telegram Userbot with OpenAI Integration
+# Telegram 用户机器人与 OpenAI 集成
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+This is a Telegram userbot that integrates with OpenAI to provide translation and text-to-speech (TTS) functionalities. Users can trigger these functionalities using specific commands in Telegram chats.
+
+这是一个与 OpenAI 集成的 Telegram 用户机器人，提供翻译和文本转语音（TTS）功能。用户可以在 Telegram 聊天中使用特定命令触发这些功能。
+
+## Features
+## 功能
+
+- **Translation**: Translate text between Chinese and English using OpenAI.
+- **翻译**：使用 OpenAI 在中文和英文之间翻译文本。
+
+- **Text-to-Speech (TTS)**: Convert text to speech and send the audio message in Telegram.
+- **文本转语音（TTS）**：将文本转换为语音并在 Telegram 中发送音频消息。
+
+## Prerequisites
+## 先决条件
+
+- Python 3.7 or higher
+- Python 3.7 或更高版本
+
+- Telegram API credentials (API ID and API Hash)
+- Telegram API 凭证（API ID 和 API Hash）
+
+- OpenAI API key
+- OpenAI API 密钥
+
+## Installation
+## 安装
+
+1. **Clone the repository**
+1. **克隆仓库**：
+
+    ```bash
+    git clone https://github.com/yourusername/telegram-userbot-openai.git
+    cd telegram-userbot-openai
+    ```
+
+2. **Create a virtual environment and activate it**
+2. **创建虚拟环境并激活**：
+
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    Windows 上使用 `venv\Scripts\activate`
+    ```
+
+3. **Install the dependencies**
+3. **安装依赖项**：
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4. **Create a `.env` file** in the root directory and add your API credentials:
+4. **在根目录中创建 `.env` 文件并添加你的 API 凭证**：
+
+    ```env
+    API_ID=your_api_id
+    API_HASH=your_api_hash
+    OPENAI_API_KEY=your_openai_api_key
+    OPENAI_API_BASE=your_openai_api_base
+    OPENAI_ENGINE=your_openai_engine
+    TTS_API_PATH=your_tts_api_path
+    TTS_API_LANGUAGE=zh
+    TTS_C_NAME=your_character_name
+    TTS_API_TOPK=50
+    TTS_API_TOPP=0.95
+    TTS_API_TEMPERATURE=0.7
+    ```
+
+5. **Run the bot**
+5. **运行机器人**：
+
+    ```bash
+    python main.py
+    ```
+
+## Usage
+## 使用方法
+
+Once the bot is running, you can use the following commands in your Telegram chats:
+机器人运行后，你可以在 Telegram 聊天中使用以下命令：
+
+- **Translate**: Use the `!fanyi` command to translate text.
+- **翻译**：使用 `!fanyi` 命令翻译文本。
+  
+  - **Example**:
+  - **示例**：
+    - `!fanyi <text>`: Translate the specified text.
+    - `!fanyi <文本>`：翻译指定的文本。
+    - Reply to a message with `!fanyi`: Translate the replied message's text.
+    - 回复消息并使用 `!fanyi`：翻译被回复消息的文本。
+    - Reply to a message with `!fanyi <text>`: Translate the specified text, ignoring the replied message's text.
+    - 回复消息并使用 `!fanyi <文本>`：翻译指定的文本，忽略被回复消息的文本。
+
+- **Text-to-Speech (TTS)**: Use the `!v` command to convert text to speech.
+- **文本转语音（TTS）**：使用 `!v` 命令将文本转换为语音。
+  
+  - **Example**:
+  - **示例**：
+    - `!v <text>`: Convert the specified text to speech.
+    - `!v <文本>`：将指定的文本转换为语音。
+    - Reply to a message with `!v`: Convert the replied message's text to speech.
+    - 回复消息并使用 `!v`：将被回复消息的文本转换为语音。
+    - Reply to a message with `!v <text>`: Convert the specified text to speech, ignoring the replied message's text.
+    - 回复消息并使用 `!v <文本>`：将指定的文本转换为语音，忽略被回复消息的文本。
+
+## Contributing
+## 贡献
+
+Contributions are welcome! Please open an issue or submit a pull request for any changes or improvements.
+欢迎贡献！请提交 issue 或 pull request 提出任何更改或改进意见。
+
+## License
+## 许可证
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+本项目采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
+
+## Acknowledgements
+## 致谢
+
+- [Pyrogram](https://docs.pyrogram.org/) - Telegram MTProto API Client Library
+- [Pyrogram](https://docs.pyrogram.org/) - Telegram MTProto API 客户端库
+
+- [OpenAI](https://openai.com/) - Language API
+- [OpenAI](https://openai.com/) - 语言 API
+
+- [Python-dotenv](https://pypi.org/project/python-dotenv/) - Read key-value pairs from a `.env` file and set them as environment variables
+- [Python-dotenv](https://pypi.org/project/python-dotenv/) - 从 `.env` 文件中读取键值对并将其设置为环境变量
+
