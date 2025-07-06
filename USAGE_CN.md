@@ -56,8 +56,8 @@
     文件内容格式如下，请将 `your_...` 部分替换为您的实际信息：
 
     ```env
-    # Telegram API 凭证
-    API_ID=your_api_id
+    # Telegram API 凭证 (注意: API_ID 必须是整数)
+    API_ID=1234567 # 请替换为您的整数 API_ID
     API_HASH=your_api_hash
 
     # OpenAI API 配置
@@ -165,7 +165,7 @@ Userbot 启动并成功登录后，您可以在任何 Telegram 聊天中通过�
 本项目基于 MIT 许可证。详细信息请参阅项目根目录下的 `LICENSE` 文件（如果存在）。
 
 ## 致谢
-- [Pyrogram](https://docs.pyrogram.org/) - 强大的 Telegram MTProto API 客户端库。
+- [Telethon](https://docs.telethon.dev/) - 强大的 Telegram MTProto API 客户端库。
 - [OpenAI](https://openai.com/) - 提供先进的自然语言处理 API。
 - [Python-dotenv](https://pypi.org/project/python-dotenv/) - 方便地从 `.env` 文件加载环境变量。
 - 以及其他所有依赖库的开发者。

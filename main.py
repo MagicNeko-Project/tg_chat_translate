@@ -1,5 +1,4 @@
-from pyrogram import Client, filters
-from pyrogram.errors import MessageTooLong
+from telethon import TelegramClient, events, errors
 import logging
 from openai import OpenAI
 import asyncio
@@ -23,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 从环境变量中读取配置项
-API_ID = os.getenv('API_ID')
+API_ID = int(os.getenv('API_ID')) # Telethon 需要 int
 API_HASH = os.getenv('API_HASH')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 OPENAI_API_BASE = os.getenv('OPENAI_API_BASE')
@@ -40,8 +39,9 @@ TTS_API_TEMPERATURE = float(os.getenv('TTS_API_TEMPERATURE'))
 # TTS 功能开关
 TTS_ENABLED = os.getenv('TTS_ENABLED', 'true').lower() == 'true'
 
-# 初始化 Userbot 客户端
-userAccount = Client("my_account", api_id=API_ID, api_hash=API_HASH)
+# 初始化 Telegram 客户端 (Telethon)
+# 使用 "my_account.session" 作为会话文件名，与 Pyrogram 默认行为类似
+client_telegram = TelegramClient("my_account", API_ID, API_HASH)
 
 # 初始化 OpenAI 客户端
 client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_API_BASE)
@@ -71,11 +71,11 @@ async def ai_tts_text(chat_id: int, text: str, reply_to_message_id: int = None, 
     # 尝试删除 !v 指令消息
     if command_message_id:
         try:
-            await userAccount.delete_messages(chat_id, message_ids=[command_message_id])
+            await client_telegram.delete_messages(entity=chat_id, message_ids=[command_message_id])
             logger.info(f"Command message deleted: message_id={command_message_id}")
         except Exception as e:
             logger.error(f"Failed to delete command message: {e}")
-    
+
     await request_queue.put(TTSJob(chat_id, text, TTS_API_LANGUAGE, reply_to_message_id, command_message_id))
     logger.info(f"Added TTS job to queue: chat_id={chat_id}, text={text}")
 
@@ -91,20 +91,18 @@ async def start_tts_task():
                 # 如果等待超时，则继续下一个循环
                 continue
 
-            # 获取聊天ID
             chat_id = job.chat_id
             logger.info(f"Processing TTS job: chat_id={chat_id}, text={job.text}")
 
-            # 将环境变量值转换为浮点数，确保API可以正确解析
             try:
-                top_k = int(TTS_API_TOPK)  # 确保 top_k 是整数
+                top_k = int(TTS_API_TOPK)
                 top_p = float(TTS_API_TOPP)
                 temperature = float(TTS_API_TEMPERATURE)
             except ValueError:
                 logger.error("Failed to convert TTS parameters to float")
-                continue  # 转换失败时跳过此任务
+                request_queue.task_done() # Ensure task is marked done
+                continue
 
-            # 使用转换后的浮点数构造请求体
             body = {
                 "cha_name": TTS_C_NAME,
                 "text": urllib.parse.quote(job.text),
@@ -112,32 +110,27 @@ async def start_tts_task():
                 "top_p": top_p,
                 "temperature": temperature,
             }
-
-            # 设置请求头，声明内容类型为JSON
             headers = {"Content-Type": "application/json"}
 
             try:
-                # 发送POST请求到TTS API，附上JSON数据和头信息
                 async with session.post(TTS_API_PATH, json=body, headers=headers, timeout=60) as response:
                     if response.status == 200:
-                        # 请求成功，读取响应内容
                         content = await response.read()
-                        # 将响应内容转换为音频
                         audio = AudioSegment.from_file(io.BytesIO(content), format="wav")
                         buffer = NamedBytesIO(name="voice.ogg")
-                        # 导出音频为OGG格式
                         audio.export(buffer, format="ogg", codec="libopus")
                         buffer.seek(0)
-                        # 确保客户端连接
-                        if not userAccount.is_connected:
-                            logger.warning("Client not connected, reconnecting...")
-                            await userAccount.connect()
 
-                        # 发送语音消息给用户
-                        if job.reply_to_message_id:
-                            await userAccount.send_voice(chat_id, buffer, reply_to_message_id=job.reply_to_message_id)
-                        else:
-                            await userAccount.send_voice(chat_id, buffer)
+                        # Telethon's client.is_connected() and connect() are different.
+                        # Usually, Telethon handles reconnections automatically if client.run_until_disconnected() is used.
+                        # For sending, we assume the client is connected if the event handler was triggered.
+
+                        await client_telegram.send_file(
+                            entity=chat_id,
+                            file=buffer,
+                            voice_note=True,
+                            reply_to=job.reply_to_message_id
+                        )
                         logger.info(f"TTS job completed successfully: chat_id={chat_id}")
                     else:
                         logger.error(f"TTS request failed: status={response.status}")
@@ -145,15 +138,13 @@ async def start_tts_task():
                 logger.error(f"TTS request exception: {e}")
                 traceback.print_exc()
             finally:
-                # 任务完成，标记队列任务已处理
                 request_queue.task_done()
 
-async def ai_translate(chat_id: int, input_text: str, message):
+async def ai_translate(chat_id: int, input_text: str, event_message): # event_message is Telethon's Message object
     translation_prompt = {
         "role": "system",
         "content": "你是一个好用的翻译助手。请将我的中文翻译成英文，将所有非中文的翻译成中文。我发给你所有的话都是需要翻译的内容，你只需要回答翻译结果。翻译结果请符合中文的语言习惯。"
     }
-
     messages = [translation_prompt, {"role": "user", "content": input_text}]
 
     try:
@@ -163,93 +154,142 @@ async def ai_translate(chat_id: int, input_text: str, message):
             max_tokens=3000
         )
         output_text = response.choices[0].message.content.strip()
-        await message.edit_text(output_text)
+        await event_message.edit(output_text) # Use event_message.edit for Telethon
         logger.info(f"Translated message edited: {output_text}")
+    except errors.rpcerrorlist.MessageTooLongError as e: # Specific Telethon error
+        logger.error(f"Message too long to edit: {e}")
+        # Optionally delete original message if edit fails due to length
+        try:
+            await client_telegram.delete_messages(entity=chat_id, message_ids=[event_message.id])
+            logger.info(f"Original message {event_message.id} deleted due to being too long for translation edit.")
+        except Exception as del_e:
+            logger.error(f"Failed to delete message {event_message.id} after edit failed: {del_e}")
     except Exception as e:
         logger.error(f"Translation request exception: {e}")
         traceback.print_exc()
 
-@userAccount.on_message(filters.text)
-async def hello(client, message):
+@client_telegram.on(events.NewMessage)
+async def message_handler(event): # event is NewMessage.Event
+    message = event.message # This is Telethon's Message object
+    chat_id = event.chat_id
+
     try:
-        # 检查消息的发送者是否为 userbot 账号本身
-        if not message.from_user or not message.from_user.is_self:
+        # 检查消息的发送者是否为 userbot 账号本身 和 消息是否为文本
+        if not message.out or not message.text:
             return
 
-        if message.text.startswith('!fanyi'):
-            # 检查是否有回复的消息
-            if message.reply_to_message:
-                # 获取指令后的文本内容
-                input_text = message.text[len('!fanyi '):].strip()
-                if input_text:
-                    # 第三种情况：回复消息且指令后有内容
-                    logger.info(f"Processing !fanyi command with reply and content: {input_text}")
-                    await ai_translate(message.chat.id, input_text, message)
-                else:
-                    # 第二种情况：回复消息但指令后无内容
-                    input_text = message.reply_to_message.text.strip()
-                    logger.info(f"Processing !fanyi command with reply: {input_text}")
-                    await ai_translate(message.chat.id, input_text, message)
-            else:
-                # 第一种情况：没有回复消息但指令后有内容
-                input_text = message.text[len('!fanyi '):].strip()
-                if input_text:
-                    logger.info(f"Processing !fanyi command: {input_text}")
-                    await ai_translate(message.chat.id, input_text, message)
-        elif message.text.startswith('!v'):
+        text_content = message.text # Use message.text
+
+        if text_content.startswith('!fanyi'):
+            replied_msg = await message.get_reply_message()
+            input_text_fanyi = text_content[len('!fanyi '):].strip()
+
+            if replied_msg:
+                if input_text_fanyi: # Reply with content
+                    logger.info(f"Processing !fanyi command with reply and content: {input_text_fanyi}")
+                    await ai_translate(chat_id, input_text_fanyi, message)
+                else: # Reply without content, use replied message's text
+                    if replied_msg.text:
+                        logger.info(f"Processing !fanyi command with reply: {replied_msg.text}")
+                        await ai_translate(chat_id, replied_msg.text, message)
+                    else:
+                        logger.info("Replied message has no text for !fanyi.")
+            elif input_text_fanyi: # No reply, but has content
+                logger.info(f"Processing !fanyi command: {input_text_fanyi}")
+                await ai_translate(chat_id, input_text_fanyi, message)
+
+        elif text_content.startswith('!v'):
             if not TTS_ENABLED:
                 logger.info("TTS功能已禁用。跳过 !v 命令。")
-                # 可选: 向用户发送消息提示TTS已禁用
-                # await message.edit_text("TTS 功能当前已禁用。")
+                # Optional: await event.edit("TTS 功能当前已禁用。") # This would edit the original !v message
                 return
 
-            # 获取命令后的文本内容
-            input_text = message.text[len('!v '):].strip()
-
-            # 如果没有指定内容且是在回复消息，则使用被回复消息的内容
-            if not input_text and message.reply_to_message:
-                input_text = message.reply_to_message.text.strip()
+            input_text_tts = text_content[len('!v '):].strip()
+            reply_to_msg_id_tts = message.reply_to_msg_id
             
-            if input_text:
-                logger.info(f"Processing !v command: {input_text}")
-                await ai_tts_text(message.chat.id, input_text, reply_to_message_id=message.reply_to_message.id if message.reply_to_message else None, command_message_id=message.id)
+            replied_msg_tts = None
+            if not input_text_tts and reply_to_msg_id_tts:
+                 replied_msg_tts = await message.get_reply_message()
+                 if replied_msg_tts and replied_msg_tts.text:
+                    input_text_tts = replied_msg_tts.text.strip()
+                 else: # Replied message has no text or no replied message for text extraction
+                    logger.error("No text provided for TTS, and replied message has no text.")
+                    return # or send an error message back
+
+            if input_text_tts:
+                logger.info(f"Processing !v command: {input_text_tts}")
+                # For !v, we delete the command message, so pass message.id
+                await ai_tts_text(chat_id, input_text_tts,
+                                  reply_to_message_id=reply_to_msg_id_tts,
+                                  command_message_id=message.id)
             else:
                 logger.error("No text provided for TTS")
-        else:
-            logger.info(f"Unhandled message: {message.text}")
-    except MessageTooLong:
+        # else:
+            # logger.info(f"Unhandled message from self: {text_content}")
+
+    except errors.rpcerrorlist.MessageTooLongError: # Catching general MessageTooLong from Telethon
         if message and message.id:
             try:
-                await userAccount.delete_messages(message.chat.id, message_ids=[message.id])
+                # Attempt to delete the problematic outgoing message if it was too long
+                await client_telegram.delete_messages(entity=chat_id, message_ids=[message.id])
+                logger.info(f"Original message {message.id} deleted as it might have been too long.")
             except Exception as delete_error:
                 logger.error(f"删除消息失败: {delete_error}")
     except Exception as e:
-        if message and message.id:
+        logger.error(f"Something else went wrong in message_handler: {e}")
+        traceback.print_exc()
+        if message and message.id: # Attempt to delete original message on other errors too
             try:
-                # 处理其他异常，删除对应的消息
-                await userAccount.delete_messages(message.chat.id, message_ids=[message.id])
+                await client_telegram.delete_messages(entity=chat_id, message_ids=[message.id])
             except Exception as delete_error:
-                logger.error(f"删除消息失败: {delete_error}")
-        logger.error(f"Something else went wrong: {e}")
+                logger.error(f"删除消息失败 on general error: {delete_error}")
 
-def signal_handler(sig, frame):
-    logger.info("Received signal to terminate. Shutting down...")
-    shutdown_event.set()
 
-    # 停止 userAccount
-    userAccount.stop()
-    
-    # 停止事件循环
+async def main():
+    # 启动TTS任务处理队列
+    # asyncio.create_task(start_tts_task()) # Run TTS task processor in background
+
+    # 注册信号处理
     loop = asyncio.get_event_loop()
-    loop.stop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(signal_handler_async(s)))
 
-# 注册信号处理程序
-signal.signal(signal.SIGINT, signal_handler)
-signal.signal(signal.SIGTERM, signal_handler)
+    try:
+        print('==> Connecting Telegram Client...')
+        await client_telegram.connect()
+        if not await client_telegram.is_user_authorized():
+            print("Client not authorized. Please run interactively to login.")
+            # Optionally, could add client_telegram.start() here to trigger login if not authorized
+            # await client_telegram.send_code_request(PHONE_NUMBER)
+            # await client_telegram.sign_in(phone=PHONE_NUMBER, code=input('Enter code: '))
+            return # Exit if not authorized and not handling login here
 
-print('==> Login UserAccount...')
-userAccount.start()
+        print('==> Userbot Connected. Starting TTS task processor...')
+        # Start the TTS task processor as a background task
+        # Make sure it's started after client is connected if it uses the client directly for checks like is_connected
+        # but in this design, send_file is called, which should be fine.
+        tts_processor_task = asyncio.create_task(start_tts_task())
 
-# 启动 TTS 任务
-loop = asyncio.get_event_loop()
-loop.run_until_complete(start_tts_task())
+        print("==> Userbot is running. Listening for messages...")
+        await client_telegram.run_until_disconnected()
+    finally:
+        print("==> Userbot is shutting down...")
+        shutdown_event.set() # Signal TTS task to stop
+        if 'tts_processor_task' in locals() and not tts_processor_task.done():
+            await asyncio.wait_for(tts_processor_task, timeout=5.0) # Wait for TTS task to finish
+        await client_telegram.disconnect()
+        print("==> Userbot disconnected.")
+
+async def signal_handler_async(sig):
+    logger.info(f"Received signal {sig}. Shutting down...")
+    shutdown_event.set()
+    # No need to stop loop explicitly here, run_until_disconnected will handle it on client disconnect
+    # If client_telegram.disconnect() is not called by run_until_disconnected handler, call it here.
+    # However, run_until_disconnected should exit on Ctrl+C.
+    # Forcing a disconnect if not already happening:
+    if client_telegram.is_connected():
+        await client_telegram.disconnect()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

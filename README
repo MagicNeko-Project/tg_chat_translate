@@ -55,11 +55,11 @@ This is a Telegram userbot that integrates with OpenAI to provide translation an
     pip install -r requirements.txt
     ```
 
-4. **Create a `.env` file** in the root directory and add your API credentials:
-4. **在根目录中创建 `.env` 文件并添加你的 API 凭证**：
+4. **Create a `.env` file** in the root directory and add your API credentials. **Note**: `API_ID` must be an integer.
+4. **在根目录中创建 `.env` 文件并添加你的 API 凭证**。**注意**：`API_ID` 必须是一个整数。
 
     ```env
-    API_ID=your_api_id
+    API_ID=1234567 # Replace with your integer API_ID
     API_HASH=your_api_hash
     OPENAI_API_KEY=your_openai_api_key
     OPENAI_API_BASE=your_openai_api_base
@@ -125,8 +125,8 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 ## 致谢
 
-- [Pyrogram](https://docs.pyrogram.org/) - Telegram MTProto API Client Library
-- [Pyrogram](https://docs.pyrogram.org/) - Telegram MTProto API 客户端库
+- [Telethon](https://docs.telethon.dev/) - Telegram MTProto API Client Library
+- [Telethon](https://docs.telethon.dev/) - Telegram MTProto API 客户端库
 
 - [OpenAI](https://openai.com/) - Language API
 - [OpenAI](https://openai.com/) - 语言 API

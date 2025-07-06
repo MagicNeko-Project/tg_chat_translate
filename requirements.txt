@@ -1,6 +1,9 @@
-pyrogram
+telethon
 python-dotenv
 openai
 aiohttp
 pydub
-tgcrypto
+# tgcrypto is usually not needed explicitly with telethon,
+# as it handles cryptography انتخاب or uses PyCryptodome.
+# If specific crypto features were used via tgcrypto with Pyrogram,
+# this might need further review. For now, assume Telethon's defaults are fine.
