@@ -31,32 +31,34 @@ This is a Telegram userbot that integrates with OpenAI to provide translation an
 ## Installation
 ## 安装
 
-1. **Clone the repository**
-1. **克隆仓库**：
+1.  **Clone the repository**
+    **克隆仓库**：
 
     ```bash
     git clone https://github.com/yourusername/telegram-userbot-openai.git
     cd telegram-userbot-openai
     ```
 
-2. **Create a virtual environment and activate it**
-2. **创建虚拟环境并激活**：
+2.  **Create a virtual environment and activate it**
+    **创建虚拟环境并激活**：
 
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    Windows 上使用 `venv\Scripts\activate`
+    # On Windows use `venv\Scripts\activate`
+    # Windows 上使用 `venv\Scripts\activate`
+    source venv/bin/activate
     ```
+    (确保 Windows 激活命令在需要时取消注释或按实际情况调整)
 
-3. **Install the dependencies**
-3. **安装依赖项**：
+3.  **Install the dependencies**
+    **安装依赖项**：
 
     ```bash
     pip install -r requirements.txt
     ```
 
-4. **Create a `.env` file** in the root directory and add your API credentials. **Note**: `API_ID` must be an integer.
-4. **在根目录中创建 `.env` 文件并添加你的 API 凭证**。**注意**：`API_ID` 必须是一个整数。
+4.  **Create a `.env` file** in the root directory and add your API credentials. **Note**: `API_ID` must be an integer.
+    **在根目录中创建 `.env` 文件并添加你的 API 凭证**。**注意**：`API_ID` 必须是一个整数。
 
     ```env
     API_ID=1234567 # Replace with your integer API_ID
@@ -73,8 +75,8 @@ This is a Telegram userbot that integrates with OpenAI to provide translation an
     TTS_ENABLED=true # Set to false to disable Text-to-Speech functionality
     ```
 
-5. **Run the bot**
-5. **运行机器人**：
+5.  **Run the bot**
+    **运行机器人**：
 
     ```bash
     python main.py
@@ -86,29 +88,25 @@ This is a Telegram userbot that integrates with OpenAI to provide translation an
 Once the bot is running, you can use the following commands in your Telegram chats:
 机器人运行后，你可以在 Telegram 聊天中使用以下命令：
 
-- **Translate**: Use the `!fanyi` command to translate text.
-- **翻译**：使用 `!fanyi` 命令翻译文本。
-  
-  - **Example**:
-  - **示例**：
-    - `!fanyi <text>`: Translate the specified text.
-    - `!fanyi <文本>`：翻译指定的文本。
-    - Reply to a message with `!fanyi`: Translate the replied message's text.
-    - 回复消息并使用 `!fanyi`：翻译被回复消息的文本。
-    - Reply to a message with `!fanyi <text>`: Translate the specified text, ignoring the replied message's text.
-    - 回复消息并使用 `!fanyi <文本>`：翻译指定的文本，忽略被回复消息的文本。
+-   **Translate**: Use the `!fanyi` command to translate text.
+    **翻译**：使用 `!fanyi` 命令翻译文本。
+    -   **Example** / **示例**:
+        -   `!fanyi <text>`: Translate the specified text.
+            `!fanyi <文本>`：翻译指定的文本。
+        -   Reply to a message with `!fanyi`: Translate the replied message's text.
+            回复消息并使用 `!fanyi`：翻译被回复消息的文本。
+        -   Reply to a message with `!fanyi <text>`: Translate the specified text, ignoring the replied message's text.
+            回复消息并使用 `!fanyi <文本>`：翻译指定的文本，忽略被回复消息的文本。
 
-- **Text-to-Speech (TTS)**: Use the `!v` command to convert text to speech.
-- **文本转语音（TTS）**：使用 `!v` 命令将文本转换为语音。
-  
-  - **Example**:
-  - **示例**：
-    - `!v <text>`: Convert the specified text to speech.
-    - `!v <文本>`：将指定的文本转换为语音。
-    - Reply to a message with `!v`: Convert the replied message's text to speech.
-    - 回复消息并使用 `!v`：将被回复消息的文本转换为语音。
-    - Reply to a message with `!v <text>`: Convert the specified text to speech, ignoring the replied message's text.
-    - 回复消息并使用 `!v <文本>`：将指定的文本转换为语音，忽略被回复消息的文本。
+-   **Text-to-Speech (TTS)**: Use the `!v` command to convert text to speech.
+    **文本转语音（TTS）**：使用 `!v` 命令将文本转换为语音。
+    -   **Example** / **示例**:
+        -   `!v <text>`: Convert the specified text to speech.
+            `!v <文本>`：将指定的文本转换为语音。
+        -   Reply to a message with `!v`: Convert the replied message's text to speech.
+            回复消息并使用 `!v`：将被回复消息的文本转换为语音。
+        -   Reply to a message with `!v <text>`: Convert the specified text to speech, ignoring the replied message's text.
+            回复消息并使用 `!v <文本>`：将指定的文本转换为语音，忽略被回复消息的文本。
 
 ## Contributing
 ## 贡献
@@ -119,18 +117,12 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## License
 ## 许可证
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-本项目采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
+This project is licensed under the MIT License. See the `LICENSE` file for details (if it exists in your project).
+本项目采用 MIT 许可证。详情请参阅 `LICENSE` 文件（如果项目中存在）。
 
 ## Acknowledgements
 ## 致谢
 
-- [Telethon](https://docs.telethon.dev/) - Telegram MTProto API Client Library
-- [Telethon](https://docs.telethon.dev/) - Telegram MTProto API 客户端库
-
-- [OpenAI](https://openai.com/) - Language API
-- [OpenAI](https://openai.com/) - 语言 API
-
-- [Python-dotenv](https://pypi.org/project/python-dotenv/) - Read key-value pairs from a `.env` file and set them as environment variables
-- [Python-dotenv](https://pypi.org/project/python-dotenv/) - 从 `.env` 文件中读取键值对并将其设置为环境变量
-
+-   [Telethon](https://docs.telethon.dev/) - Telegram MTProto API Client Library / Telegram MTProto API 客户端库
+-   [OpenAI](https://openai.com/) - Language API / 语言 API
+-   [Python-dotenv](https://pypi.org/project/python-dotenv/) - Read key-value pairs from a `.env` file and set them as environment variables / 从 `.env` 文件中读取键值对并将其设置为环境变量
