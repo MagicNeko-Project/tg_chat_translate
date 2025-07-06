@@ -37,6 +37,9 @@ TTS_API_TOPK = int(os.getenv('TTS_API_TOPK'))
 TTS_API_TOPP = float(os.getenv('TTS_API_TOPP'))
 TTS_API_TEMPERATURE = float(os.getenv('TTS_API_TEMPERATURE'))
 
+# TTS 功能开关
+TTS_ENABLED = os.getenv('TTS_ENABLED', 'true').lower() == 'true'
+
 # 初始化 Userbot 客户端
 userAccount = Client("my_account", api_id=API_ID, api_hash=API_HASH)
 
@@ -194,6 +197,12 @@ async def hello(client, message):
                     logger.info(f"Processing !fanyi command: {input_text}")
                     await ai_translate(message.chat.id, input_text, message)
         elif message.text.startswith('!v'):
+            if not TTS_ENABLED:
+                logger.info("TTS功能已禁用。跳过 !v 命令。")
+                # 可选: 向用户发送消息提示TTS已禁用
+                # await message.edit_text("TTS 功能当前已禁用。")
+                return
+
             # 获取命令后的文本内容
             input_text = message.text[len('!v '):].strip()
 

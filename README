@@ -70,6 +70,7 @@ This is a Telegram userbot that integrates with OpenAI to provide translation an
     TTS_API_TOPK=50
     TTS_API_TOPP=0.95
     TTS_API_TEMPERATURE=0.7
+    TTS_ENABLED=true # Set to false to disable Text-to-Speech functionality
     ```
 
 5. **Run the bot**
